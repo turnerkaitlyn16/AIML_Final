@@ -24,16 +24,9 @@ combined_data = pd.concat([train, test], axis=0, ignore_index=True)
 # also filter out experienced marathon runners who DNF'd the race 
 #   as we cannot have nan's in the outcome varaible
 marathon_veteran = combined_data[combined_data['previous_marathon_count']>0]
-marathon_veteran = marathon_veteran[marathon_veteran['actual_finish_time_minutes'].notna()]
-
 
 # make the outcome varaible - the time improvement relative to the runner's PB
 marathon_veteran['time_improvement'] = marathon_veteran['personal_best_minutes'] - marathon_veteran['actual_finish_time_minutes']
-
-# make the NaNs in the injury_severity column be 'No Injury', which is logical 
-# injury severity is a string categorical - mild, moderate, severe
-marathon_veteran['injury_severity'] = marathon_veteran['injury_severity'].fillna('No Injury')
-
 
 # create a visualization of the data I am working with
 data_dict = {
@@ -100,6 +93,14 @@ plt.xticks(rotation=45, ha='right')
 plt.suptitle('Correlation Matrix of Top 15 Features Most Linked to PR Improvement', y=0.98, fontsize=12, weight='bold')
 plt.savefig('figures/correlation_heatmap.png', dpi=300, bbox_inches='tight')
 plt.close(fig)
+
+
+# restricting my dataset to those who finished the race 
+marathon_veteran = marathon_veteran[marathon_veteran['actual_finish_time_minutes'].notna()].copy()
+
+# make the NaNs in the injury_severity column be 'No Injury', which is logical 
+# injury severity is a string categorical - mild, moderate, severe
+marathon_veteran['injury_severity'] = marathon_veteran['injury_severity'].fillna('No Injury')
 
 # saving the combined and cleaned dataset down to submit
 marathon_veteran.to_csv('data/final_data.csv', index=False)
@@ -201,7 +202,7 @@ top10_xgb = xgb_importance_df.sort_values(by='Importance', ascending=False).head
 plt.figure(figsize=(10, 6))
 plt.barh(xgb_importance_df['Feature'].head(20)[::-1], xgb_importance_df['Importance'].head(20)[::-1], color='teal')
 plt.xlabel('XGBoost Feature Importance (Gain)')
-plt.title('Top 20 Predictors of Marathon Time Improvement')
+plt.title('Top 20 Predictors of Marathon Time Improvement in XGBoost')
 plt.tight_layout()
 plt.savefig('figures/xgb_feature_importance.png', dpi=300, bbox_inches='tight')
 
@@ -336,7 +337,7 @@ top10_mlp = mlp_importance_df.sort_values(by='Importance_Score', ascending=False
 plt.figure(figsize=(10, 6))
 plt.barh(mlp_importance_df['Feature'].head(20)[::-1], mlp_importance_df['Importance_Score'].head(20)[::-1], color='indigo')
 plt.xlabel('Drop in Model Performance (R² Score) When Shuffled')
-plt.title('Neural Network (MLP) Feature Importance via Permutation')
+plt.title('Top 20 Most Important Features for Marathon Time Improvement in MLP Regressor')
 plt.tight_layout()
 plt.savefig('figures/MLP_feature_importance.png', dpi=300, bbox_inches='tight')
 
